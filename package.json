@@ -1,0 +1,26 @@
+{
+  "name": "weather-info",
+  "version": "1.0.0",
+  "description": "1.",
+  "main": "getInfo.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node getInfo.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pramananda-sarkar/weather-info.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pramananda-sarkar/weather-info/issues"
+  },
+  "homepage": "https://github.com/pramananda-sarkar/weather-info#readme",
+  "dependencies": {
+    "chart.js": "^4.4.8",
+    "nodemon": "^3.1.9"
+  }
+}

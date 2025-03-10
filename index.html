@@ -1,31 +1,128 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>Geolocation</h1>
-    
-
-    <button onclick="getLocation()">get location</button>
-
-    <p id="demo">Location</p>
-
-    <script>
-      const x = document.getElementById("demo");
-
-      function getLocation() {
-        if (navigator.geolocation) {
-          navigator.geolocation.watchPosition(showPosition);
-        } else {
-          x.innerHTML = "Geolocation is not supported by this browser.";
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Weather</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
-      }
+        #weatherInfo {
+            margin-top: 20px;
+        }
+        #weatherChart {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Current Weather at Your Location</h1>
+    <div id="weatherInfo">
+        <p id="location">Getting location...</p>
+        <p id="current">Loading weather data...</p>
+    </div>
+    <canvas id="weatherChart"></canvas>
 
-      function showPosition(position) {
-        x.innerHTML =
-          "Latitude: " +
-          position.coords.latitude +
-          "<br>Longitude: " +
-          position.coords.longitude;
-      }
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const APIkey = "b7009e2a54384e80a0561051251003"; // Your API key
+        const BASEURL = "http://api.weatherapi.com/v1";
+        let chart;
+
+        // Function to fetch and display weather data
+        function getWeather(lat, lon) {
+            const url = `${BASEURL}/forecast.json?key=${APIkey}&q=${lat},${lon}&days=1`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update basic weather info
+                    document.getElementById('location').textContent = 
+                        `Location: ${data.location.name}, ${data.location.country}`;
+                    document.getElementById('current').innerHTML = `
+                        Temperature: ${data.current.temp_c}°C<br>
+                        Condition: ${data.current.condition.text}<br>
+                        Humidity: ${data.current.humidity}%<br>
+                        Wind: ${data.current.wind_kph} kph
+                    `;
+
+                    // Prepare chart data
+                    const hourlyData = data.forecast.forecastday[0].hour;
+                    const times = hourlyData.map(hour => new Date(hour.time).getHours());
+                    const temps = hourlyData.map(hour => hour.temp_c);
+
+                    // Destroy existing chart if it exists
+                    if (chart) {
+                        chart.destroy();
+                    }
+
+                    // Create new chart
+                    const ctx = document.getElementById('weatherChart').getContext('2d');
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: times.map(t => `${t}:00`),
+                            datasets: [{
+                                label: 'Temperature (°C)',
+                                data: temps,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Temperature (°C)'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Time (24h)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('current').textContent = 
+                        `Error loading weather data: ${error.message}`;
+                    console.error('Error:', error);
+                });
+        }
+
+        // Get user's location and fetch weather
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    getWeather(lat, lon);
+                },
+                (error) => {
+                    document.getElementById('location').textContent = 
+                        'Unable to get location. Using default (Dhaka, Bangladesh)';
+                    getWeather(23.7238697, 90.3894119); // Default location
+                }
+            );
+        } else {
+            document.getElementById('location').textContent = 
+                'Geolocation not supported. Using default (Dhaka, Bangladesh)';
+            getWeather(23.7238697, 90.3894119); // Default location
+        }
     </script>
-  </body>
+</body>
 </html>
